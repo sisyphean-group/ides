@@ -10,7 +10,10 @@ boolean
 
 
 *Default:*
-` true `
+
+```nix
+true
+```
 
 *Declared by:*
  - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
@@ -21,7 +24,7 @@ boolean
 
 
 
-Enable, or set timeout period for, monitoring devshell activity and automatically destroying services after (experimental)\.
+Enable shell lease hooks that stop and clean services when the last shell lease exits\. Integer values are accepted for the old monitor API but currently behave like ` true `\.
 
 
 
@@ -31,7 +34,10 @@ boolean or signed integer
 
 
 *Default:*
-` true `
+
+```nix
+true
+```
 
 *Declared by:*
  - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
@@ -55,54 +61,71 @@ attribute set of (submodule)
 
 
 
-## serviceDefs\.\<name>\.args
+## serviceDefs\.\<name>\.argv
 
 
 
-Arguments to supply to the service binary\. Writing %CFG% in this will template to your config location\.
+Structured argv to supply to the service binary\. Use ` { config = "name"; } ` to splice in a generated static or runtime config path\.
 
 
 
 *Type:*
-string
+list of (string or absolute path or (submodule))
 
 
 
 *Default:*
-` "" `
+
+```nix
+[ ]
+```
 
 
 
 *Example:*
-` "run -c %CFG% --adapter caddyfile" `
+
+```nix
+[
+  "run"
+  "-c"
+  {
+    config = "main";
+  }
+  "--adapter"
+  "caddyfile"
+]
+```
 
 *Declared by:*
  - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
-## serviceDefs\.\<name>\.config
+## serviceDefs\.\<name>\.configs
 
 
 
-Options for setting the service’s configuration\.
+Named generated static or runtime config files that can be referenced from ` argv ` with ` { config = "name"; } `\.
 
 
 
 *Type:*
-submodule
+attribute set of (submodule)
 
 
 
 *Default:*
-` { } `
+
+```nix
+{ }
+```
 
 *Declared by:*
  - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
-## serviceDefs\.\<name>\.config\.content
+## serviceDefs\.\<name>\.configs\.\<name>\.content
 
 
 
@@ -116,13 +139,16 @@ null or (attribute set)
 
 
 *Default:*
-` null `
+
+```nix
+null
+```
 
 
 
 *Example:*
 
-```
+```nix
 {
   this = "that";
 }
@@ -133,7 +159,7 @@ null or (attribute set)
 
 
 
-## serviceDefs\.\<name>\.config\.ext
+## serviceDefs\.\<name>\.configs\.\<name>\.ext
 
 
 
@@ -147,19 +173,25 @@ string
 
 
 *Default:*
-` "" `
+
+```nix
+""
+```
 
 
 
 *Example:*
-` "json" `
+
+```nix
+"json"
+```
 
 *Declared by:*
  - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
-## serviceDefs\.\<name>\.config\.file
+## serviceDefs\.\<name>\.configs\.\<name>\.file
 
 
 
@@ -173,19 +205,25 @@ null or absolute path
 
 
 *Default:*
-` null `
+
+```nix
+null
+```
 
 
 
 *Example:*
-` "./configs/my-config.ini" `
+
+```nix
+"./configs/my-config.ini"
+```
 
 *Declared by:*
  - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
-## serviceDefs\.\<name>\.config\.format
+## serviceDefs\.\<name>\.configs\.\<name>\.format
 
 
 
@@ -201,19 +239,25 @@ null or one of “java”, “json”, “yaml”, “toml”, “ini”, “xml
 
 
 *Default:*
-` null `
+
+```nix
+null
+```
 
 
 
 *Example:*
-` "json" `
+
+```nix
+"json"
+```
 
 *Declared by:*
  - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
-## serviceDefs\.\<name>\.config\.formatter
+## serviceDefs\.\<name>\.configs\.\<name>\.formatter
 
 
 
@@ -229,19 +273,118 @@ anything
 
 
 *Default:*
-` null `
+
+```nix
+null
+```
 
 
 
 *Example:*
-` "pkgs.formats.yaml {}.generate" `
+
+```nix
+"pkgs.formats.yaml {}.generate"
+```
 
 *Declared by:*
  - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
-## serviceDefs\.\<name>\.config\.text
+## serviceDefs\.\<name>\.configs\.\<name>\.runtime
+
+
+
+Runtime-rendered config template\. Use this when config content must refer to ephemeral ides runtime paths\.
+
+
+
+*Type:*
+null or (submodule)
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.configs\.\<name>\.runtime\.fileName
+
+
+
+Relative file name to use under the service runtime config directory\. Defaults to the config name plus any configured extension\.
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+
+
+*Example:*
+
+```nix
+"redis.conf"
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.configs\.\<name>\.runtime\.parts
+
+
+
+Typed template parts rendered by ides immediately before starting the service\.
+
+
+
+*Type:*
+list of (string or absolute path or (attribute set))
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+
+
+*Example:*
+
+```nix
+[
+  "dir "
+  {
+    runtimePath = "data";
+  }
+]
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.configs\.\<name>\.text
 
 
 
@@ -255,18 +398,215 @@ string
 
 
 *Default:*
-` "" `
+
+```nix
+""
+```
 
 
 
 *Example:*
 
-```
+```nix
 ''
   http://*:8080 {
     respond "hello"
   }
 ''
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.dependencies
+
+
+
+Service dependency and ordering metadata handled by the ides runtime\.
+
+
+
+*Type:*
+submodule
+
+
+
+*Default:*
+
+```nix
+{ }
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.dependencies\.after
+
+
+
+Services that must be ordered before this service when both are started or stopped together\.
+
+
+
+*Type:*
+list of string
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+
+
+*Example:*
+
+```nix
+[
+  "postgres"
+]
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.dependencies\.before
+
+
+
+Services that must be ordered after this service when both are started or stopped together\.
+
+
+
+*Type:*
+list of string
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+
+
+*Example:*
+
+```nix
+[
+  "worker"
+]
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.dependencies\.partOf
+
+
+
+Services whose stop or restart operations should also stop or restart this service\.
+
+
+
+*Type:*
+list of string
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+
+
+*Example:*
+
+```nix
+[
+  "app"
+]
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.dependencies\.requires
+
+
+
+Services that must be started before this service\. Missing services are treated as configuration errors\.
+
+
+
+*Type:*
+list of string
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+
+
+*Example:*
+
+```nix
+[
+  "postgres"
+]
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.dependencies\.wants
+
+
+
+Services that should be started before this service\. In ides this is currently strict like ` requires `, because all referenced services must exist in the manifest\.
+
+
+
+*Type:*
+list of string
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+
+
+*Example:*
+
+```nix
+[
+  "redis"
+]
 ```
 
 *Declared by:*
@@ -288,12 +628,18 @@ string
 
 
 *Default:*
-` "" `
+
+```nix
+""
+```
 
 
 
 *Example:*
-` "caddy" `
+
+```nix
+"caddy"
+```
 
 *Declared by:*
  - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
@@ -314,13 +660,16 @@ attribute set of list of string
 
 
 *Default:*
-` { } `
+
+```nix
+{ }
+```
 
 
 
 *Example:*
 
-```
+```nix
 {
   PathModified = [
     "/some/path"
@@ -342,12 +691,127 @@ Package to use for service\.
 
 
 *Type:*
-package
+null or package
+
+
+
+*Default:*
+
+```nix
+null
+```
 
 
 
 *Example:*
-` "pkgs.caddy" `
+
+```nix
+"pkgs.caddy"
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.runtime
+
+
+
+Ephemeral runtime defaults for the service\.
+
+
+
+*Type:*
+submodule
+
+
+
+*Default:*
+
+```nix
+{ }
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.runtime\.env
+
+
+
+Additional environment variables to inject into the transient service\.
+
+
+
+*Type:*
+attribute set of string
+
+
+
+*Default:*
+
+```nix
+{ }
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.runtime\.ephemeral
+
+
+
+Place default writable paths under the ides runtime directory and clean them on explicit stop\.
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+true
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.shellCommand
+
+
+
+Raw shell command to run for the service\. This is an escape hatch for services that do not fit package/executable/argv\.
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+
+
+*Example:*
+
+```nix
+"\${pkgs.lib.getExe pkgs.caddy} run -c \${pkgs.writeText \"Caddyfile\" cfg.extraConfig} --adapter caddyfile"
+```
 
 *Declared by:*
  - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
@@ -368,13 +832,16 @@ attribute set of list of string
 
 
 *Default:*
-` { } `
+
+```nix
+{ }
+```
 
 
 
 *Example:*
 
-```
+```nix
 {
   ListenStream = [
     "/run/user/1000/myapp.sock"
@@ -387,11 +854,419 @@ attribute set of list of string
 
 
 
+## serviceDefs\.\<name>\.systemd
+
+
+
+Small set of systemd service properties that ides can preserve when starting transient units\.
+
+
+
+*Type:*
+submodule
+
+
+
+*Default:*
+
+```nix
+{ }
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.systemd\.execReload
+
+
+
+Commands to run as systemd ExecReload entries\.
+
+
+
+*Type:*
+list of (string or (submodule))
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.systemd\.execStartPost
+
+
+
+Commands to run as systemd ExecStartPost entries after the main service command starts\.
+
+
+
+*Type:*
+list of (string or (submodule))
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.systemd\.execStartPre
+
+
+
+Commands to run as systemd ExecStartPre entries before the main service command\.
+
+
+
+*Type:*
+list of (string or (submodule))
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.systemd\.execStop
+
+
+
+Commands to run as systemd ExecStop entries when the transient unit stops\.
+
+
+
+*Type:*
+list of (string or (submodule))
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.systemd\.ignoreStartFailure
+
+
+
+Whether systemd should ignore the main ExecStart command’s failure\.
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+false
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.systemd\.killMode
+
+
+
+systemd KillMode value to pass to the transient unit\.
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.systemd\.notifyAccess
+
+
+
+systemd NotifyAccess value for notify-style services\. Defaults to ` all ` for notify services when omitted\.
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.systemd\.remainAfterExit
+
+
+
+systemd RemainAfterExit value to pass to the transient unit\.
+
+
+
+*Type:*
+null or boolean
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.systemd\.restart
+
+
+
+systemd Restart policy to pass to the transient unit\.
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.systemd\.restartSec
+
+
+
+systemd RestartSec duration to pass to the transient unit\.
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.systemd\.serviceType
+
+
+
+systemd service Type to pass to the transient unit, such as ` simple `, ` exec `, ` oneshot `, or ` notify `\.
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.systemd\.timeoutSec
+
+
+
+systemd TimeoutSec duration to apply to transient service start and stop timeouts\.
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.systemd\.timeoutStartSec
+
+
+
+systemd TimeoutStartSec duration to pass to the transient unit\.
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.systemd\.timeoutStopSec
+
+
+
+systemd TimeoutStopSec duration to pass to the transient unit\.
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.systemd\.watchdogSec
+
+
+
+systemd WatchdogSec duration to pass to the transient unit\.
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## serviceDefs\.\<name>\.systemd\.workingDirectory
+
+
+
+Working directory to pass to the transient unit\. Defaults to the ides runtime data directory\.
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
 ## serviceDefs\.\<name>\.timer
 
 
 
-List of timer options for the unit (see ` man systemd.path `) - supplied as a list due to some options allowing duplicates\.
+List of timer options for the unit (see ` man systemd.timer `) - supplied as a list due to some options allowing duplicates\.
 
 
 
@@ -401,16 +1276,19 @@ attribute set of list of string
 
 
 *Default:*
-` { } `
+
+```nix
+{ }
+```
 
 
 
 *Example:*
 
-```
+```nix
 {
   OnActiveSec = [
-    50
+    "50s"
   ];
 }
 ```
@@ -434,12 +1312,18 @@ boolean
 
 
 *Default:*
-` false `
+
+```nix
+false
+```
 
 
 
 *Example:*
-` true `
+
+```nix
+true
+```
 
 *Declared by:*
  - [modules/redis\.nix](https://git.atagen.co/atagen/ides/modules/redis.nix)
@@ -461,7 +1345,7 @@ list of string
 
 *Default:*
 
-```
+```nix
 [
   "127.0.0.1"
   "::1"
@@ -487,7 +1371,10 @@ signed integer
 
 
 *Default:*
-` 16 `
+
+```nix
+16
+```
 
 *Declared by:*
  - [modules/redis\.nix](https://git.atagen.co/atagen/ides/modules/redis.nix)
@@ -508,7 +1395,10 @@ string
 
 
 *Default:*
-` "" `
+
+```nix
+""
+```
 
 *Declared by:*
  - [modules/redis\.nix](https://git.atagen.co/atagen/ides/modules/redis.nix)
@@ -529,7 +1419,10 @@ one of “debug”, “verbose”, “notice”, “warning”, “nothing”
 
 
 *Default:*
-` "notice" `
+
+```nix
+"notice"
+```
 
 *Declared by:*
  - [modules/redis\.nix](https://git.atagen.co/atagen/ides/modules/redis.nix)
@@ -550,7 +1443,10 @@ string
 
 
 *Default:*
-` "redis" `
+
+```nix
+"redis"
+```
 
 *Declared by:*
  - [modules/redis\.nix](https://git.atagen.co/atagen/ides/modules/redis.nix)
@@ -571,7 +1467,10 @@ integer between 1024 and 65535 (both inclusive)
 
 
 *Default:*
-` 6379 `
+
+```nix
+6379
+```
 
 *Declared by:*
  - [modules/redis\.nix](https://git.atagen.co/atagen/ides/modules/redis.nix)
@@ -582,7 +1481,7 @@ integer between 1024 and 65535 (both inclusive)
 
 
 
-Unix socket to bind to\.
+Unix socket to bind to\. Relative paths are placed under the service runtime run directory; absolute paths are used as-is\.
 
 
 
@@ -592,7 +1491,10 @@ null or string
 
 
 *Default:*
-` null `
+
+```nix
+null
+```
 
 *Declared by:*
  - [modules/redis\.nix](https://git.atagen.co/atagen/ides/modules/redis.nix)
@@ -613,9 +1515,378 @@ null or signed integer
 
 
 *Default:*
-` null `
+
+```nix
+null
+```
 
 *Declared by:*
  - [modules/redis\.nix](https://git.atagen.co/atagen/ides/modules/redis.nix)
+
+
+
+## systemd\.services
+
+
+
+Compatibility subset of NixOS ` systemd.services `\.
+
+ides lowers simple foreground services into ` serviceDefs `\. Supported
+fields are ` script `, single-command ` serviceConfig.ExecStart `, ` path `,
+` environment `, a small transient-safe ` serviceConfig ` subset, and local
+service dependency lists\. Target/unit installation fields such as
+` wantedBy ` are accepted but ignored\.
+
+
+
+*Type:*
+attribute set of (submodule)
+
+
+
+*Default:*
+
+```nix
+{ }
+```
+
+*Declared by:*
+ - [lib/nixos-compat\.nix](https://git.atagen.co/atagen/ides/lib/nixos-compat.nix)
+
+
+
+## systemd\.services\.\<name>\.enable
+
+
+
+Whether to lower this NixOS-style systemd service into an ides service definition\.
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+true
+```
+
+*Declared by:*
+ - [lib/nixos-compat\.nix](https://git.atagen.co/atagen/ides/lib/nixos-compat.nix)
+
+
+
+## systemd\.services\.\<name>\.after
+
+
+
+NixOS-style ordering constraints\. Local service references are lowered into ides dependencies\.
+
+
+
+*Type:*
+list of string
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+ - [lib/nixos-compat\.nix](https://git.atagen.co/atagen/ides/lib/nixos-compat.nix)
+
+
+
+## systemd\.services\.\<name>\.before
+
+
+
+NixOS-style reverse ordering constraints\. Local service references are lowered into ides dependencies\.
+
+
+
+*Type:*
+list of string
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+ - [lib/nixos-compat\.nix](https://git.atagen.co/atagen/ides/lib/nixos-compat.nix)
+
+
+
+## systemd\.services\.\<name>\.description
+
+
+
+Service description\. Kept for NixOS compatibility; currently not emitted into the ides manifest\.
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+""
+```
+
+*Declared by:*
+ - [lib/nixos-compat\.nix](https://git.atagen.co/atagen/ides/lib/nixos-compat.nix)
+
+
+
+## systemd\.services\.\<name>\.environment
+
+
+
+Environment variables injected into the lowered ides service\.
+
+
+
+*Type:*
+attribute set of (string or absolute path or signed integer or boolean)
+
+
+
+*Default:*
+
+```nix
+{ }
+```
+
+*Declared by:*
+ - [lib/nixos-compat\.nix](https://git.atagen.co/atagen/ides/lib/nixos-compat.nix)
+
+
+
+## systemd\.services\.\<name>\.partOf
+
+
+
+NixOS-style PartOf constraints\. Local service references are lowered into ides dependencies\.
+
+
+
+*Type:*
+list of string
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+ - [lib/nixos-compat\.nix](https://git.atagen.co/atagen/ides/lib/nixos-compat.nix)
+
+
+
+## systemd\.services\.\<name>\.path
+
+
+
+Packages or paths added to PATH for script-style services\.
+
+
+
+*Type:*
+list of (package or absolute path or string)
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+ - [lib/nixos-compat\.nix](https://git.atagen.co/atagen/ides/lib/nixos-compat.nix)
+
+
+
+## systemd\.services\.\<name>\.preStart
+
+
+
+Shell script to run before the service command\.
+
+
+
+*Type:*
+strings concatenated with “\\n”
+
+
+
+*Default:*
+
+```nix
+""
+```
+
+*Declared by:*
+ - [lib/nixos-compat\.nix](https://git.atagen.co/atagen/ides/lib/nixos-compat.nix)
+
+
+
+## systemd\.services\.\<name>\.requiredBy
+
+
+
+Accepted for NixOS compatibility but ignored by ides\.
+
+
+
+*Type:*
+list of string
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+ - [lib/nixos-compat\.nix](https://git.atagen.co/atagen/ides/lib/nixos-compat.nix)
+
+
+
+## systemd\.services\.\<name>\.requires
+
+
+
+NixOS-style service requirements\. Local service references are lowered into ides dependencies\.
+
+
+
+*Type:*
+list of string
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+ - [lib/nixos-compat\.nix](https://git.atagen.co/atagen/ides/lib/nixos-compat.nix)
+
+
+
+## systemd\.services\.\<name>\.script
+
+
+
+Shell script to run as the service command\.
+
+
+
+*Type:*
+strings concatenated with “\\n”
+
+
+
+*Default:*
+
+```nix
+""
+```
+
+*Declared by:*
+ - [lib/nixos-compat\.nix](https://git.atagen.co/atagen/ides/lib/nixos-compat.nix)
+
+
+
+## systemd\.services\.\<name>\.serviceConfig
+
+
+
+Small supported subset of NixOS serviceConfig\. ides currently accepts command lifecycle hooks, Type, NotifyAccess, Restart, common timeout fields, RemainAfterExit, KillMode, and WorkingDirectory\.
+
+
+
+*Type:*
+attribute set of anything
+
+
+
+*Default:*
+
+```nix
+{ }
+```
+
+*Declared by:*
+ - [lib/nixos-compat\.nix](https://git.atagen.co/atagen/ides/lib/nixos-compat.nix)
+
+
+
+## systemd\.services\.\<name>\.wantedBy
+
+
+
+Accepted for NixOS compatibility but ignored by ides\.
+
+
+
+*Type:*
+list of string
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+ - [lib/nixos-compat\.nix](https://git.atagen.co/atagen/ides/lib/nixos-compat.nix)
+
+
+
+## systemd\.services\.\<name>\.wants
+
+
+
+NixOS-style service wants\. Local service references are lowered into ides dependencies\.
+
+
+
+*Type:*
+list of string
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+ - [lib/nixos-compat\.nix](https://git.atagen.co/atagen/ides/lib/nixos-compat.nix)
 
 

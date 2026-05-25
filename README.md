@@ -19,11 +19,12 @@ right here, right now.
  - full support for `shell.nix`, `flake.nix`, and `direnv`
 
 ### it's ephemeral
- - ides packages and configs are present only in the nix store
+ - ides packages and static configs are present only in the nix store
+ - writable service state defaults under `$XDG_RUNTIME_DIR/ides/<set-id>/`
  - once shut down all traces effectively disappear
 
 ### they're idempotent
- - ides services cah only ever run one (1) instance of any package+config combination
+ - ides services can only ever run one (1) instance of any package+config combination
  - no matter how many times the devshell is opened or the launch command invoked
 
 ### they're services
@@ -39,7 +40,7 @@ your dev environment now reproducibly includes your service dependencies!
 - import it
   - optionally provide a `pkgs` instance, mkShell-like function, or ides modules
 - use ides like a normal `mkShell`, but with *spicy extras*
-- make sure you run `et-tu` before you log out!
+- run `ides stop` for manual teardown; shell leases clean up automatically on exit
 
 here's how:
 
@@ -119,9 +120,14 @@ mkIdes {
   # as simple as possible
   serviceDefs.caddy = {
     pkg = pkgs.caddy;
-    # ides injects the config path whereever %CFG% is used in `args`
-    args = "run -c %CFG% --adapter caddyfile";
-    config.text = ''
+    argv = [
+      "run"
+      "-c"
+      { config = "main"; }
+      "--adapter"
+      "caddyfile"
+    ];
+    configs.main.text = ''
       http://*:8888 {
       	respond "hello"
       }
@@ -130,7 +136,8 @@ mkIdes {
 }
 ```
 here, we use a simple plaintext config, but ides also supports converting
-attribute sets into the following formats (via `config.content` & `config.format`):
+attribute sets into the following formats (via `configs.<name>.content` &
+`configs.<name>.format`):
 - `json`
 - `yaml`
 - `toml`
@@ -138,6 +145,20 @@ attribute sets into the following formats (via `config.content` & `config.format
 - `xml`
 - `php`
 - `java`
+
+configs can also be rendered at service start when they need ephemeral runtime
+paths:
+```nix
+configs.main.runtime = {
+  fileName = "service.conf";
+  parts = [
+    "data_dir = "
+    { runtimePath = "data"; }
+    "\n"
+  ];
+};
+argv = [ "--config" { config = "main"; } ];
+```
 
 ### writing a service module
 see [the provided redis module](modules/redis.nix) for an example
@@ -147,10 +168,17 @@ for fully commented examples, see [here](example)
 
 ### cli
 in case you need manual control, an ides shell provides commands:
-- `ides`: raise the service set manually
-- `et-tu`: shut down the service set
-- `restart`: do both of the above in succession
+- `ides run`: raise the service set manually
+- `ides stop`: shut down the service set
+- `ides restart`: do both of the above in succession
+- `ides status`: show service status
+- `ides status --json`: show unit state, activation units, leases, runtime paths, and config paths
+- `ides tui`: watch service state, leases, dependency hints, runtime paths, and config paths
+- `ides inspect`: inspect the generated manifest
+
+Services may also declare lightweight socket, path, or timer activation through
+`serviceDefs.<name>.socket`, `.path`, or `.timer`; ides lowers those to
+transient user units and keeps its own dependency graph semantics.
 
 ### documentation
 see [module docs](docs/docs.md)
-
