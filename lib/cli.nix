@@ -1,5 +1,7 @@
 {
   foldlAttrs,
+  manifest,
+  rustCli,
   writeShellScriptBin,
   works,
 }:
@@ -98,6 +100,13 @@ let
       "check"
       "ch"
     ])
+    (mkCmd "inspect generated manifest" "inspect" [
+      "show"
+      "expose"
+    ])
+    (mkCmd "watch service dashboard" "tui" [
+      "top"
+    ])
   ];
   actionHelp = builtins.concatStringsSep "\n" (
     map (cmd: ''
@@ -180,14 +189,39 @@ writeShellScriptBin "ides" ''
   }
 
   case $1 in 
-    ${builtins.concatStringsSep "\n" (
-      map (action: ''
-        ${action.fn}|${builtins.concatStringsSep "|" action.synonyms})
-          shift
-          action ${action.fn} $@
-        ;;
-      '') actions
-    )}
+    run|r|up|start)
+      shift
+      ${rustCli}/bin/ides up --manifest ${manifest} "$@"
+    ;;
+    stop|s|clean|et-tu|down)
+      shift
+      ${rustCli}/bin/ides down --manifest ${manifest} "$@"
+    ;;
+    restart|qq|re)
+      shift
+      ${rustCli}/bin/ides restart --manifest ${manifest} "$@"
+    ;;
+    status|stat|check|ch)
+      shift
+      ${rustCli}/bin/ides status --manifest ${manifest} "$@"
+    ;;
+    inspect|show|expose)
+      shift
+      ${rustCli}/bin/ides inspect --manifest ${manifest} "$@"
+    ;;
+    tui|top)
+      shift
+      ${rustCli}/bin/ides tui --manifest ${manifest} "$@"
+    ;;
+    enter)
+      shift
+      ${rustCli}/bin/ides enter --manifest ${manifest} "$@"
+    ;;
+    leave|heartbeat)
+      command=$1
+      shift
+      ${rustCli}/bin/ides "$command" "$@"
+    ;;
     targets|t)
       list-targets
     ;;

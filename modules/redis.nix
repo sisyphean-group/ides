@@ -30,7 +30,7 @@
 
       socket = mkOption {
         type = with types; nullOr str;
-        description = "Unix socket to bind to.";
+        description = "Unix socket to bind to. Relative paths are placed under the service runtime run directory; absolute paths are used as-is.";
         default = null;
       };
 
@@ -82,45 +82,40 @@
         pkg = pkgs.redis;
         # make sure we get the server binary, not cli
         exec = "redis-server";
-        args = "%CFG%";
-        config = {
-          ext = ".conf";
-          # these need to be made to match redis config
-          # variable names here
-          content = {
-            inherit (cfg) bind port databases;
-            unixsocket = cfg.socket;
-            unixsocketperm = cfg.socketPerms;
-            loglevel = cfg.logLevel;
-          };
-          # a formatter needs to take in a set of
-          # attrs and write out a file
-          formatter =
-            let
-              # set up serialisation for all types
-              serialise = {
-                int = builtins.toString;
-                bool = b: if b then "yes" else "no";
-                string = s: s;
-                path = builtins.toString;
-                null = _: _;
-                list = builtins.concatStringsSep " ";
-                float = builtins.toString;
-                set = throw "cannot serialise a set in redis format";
-                lambda = throw "cannot serialise a lambda, wtf?";
-              };
-            in
-            # create a lambda that can serialise to redis config
-            path: attrs:
-            let
-              text =
-                (lib.foldlAttrs (
-                  acc: n: v:
-                  if (v != null) then acc + "${n} ${serialise.${builtins.typeOf v} v}" + "\n" else acc
-                ) "" attrs)
-                + cfg.extraConfig;
-            in
-            (pkgs.writeText path text).outPath;
+        argv = [ { config = "main"; } ];
+        configs.main.runtime = {
+          fileName = "redis.conf";
+          parts =
+            [
+              "bind ${lib.concatStringsSep " " cfg.bind}\n"
+              "port ${toString cfg.port}\n"
+              "databases ${toString cfg.databases}\n"
+              "loglevel ${cfg.logLevel}\n"
+              "dir "
+              { runtimePath = "data"; }
+              "\n"
+              "pidfile "
+              { runtimePath = "run"; }
+              "/redis.pid\n"
+            ]
+            ++ lib.optionals (cfg.socket != null) (
+              if lib.hasPrefix "/" cfg.socket then
+                [
+                  "unixsocket ${cfg.socket}\n"
+                ]
+              else
+                [
+                  "unixsocket "
+                  { runtimePath = "run"; }
+                  "/${cfg.socket}\n"
+                ]
+            )
+            ++ lib.optionals (cfg.socket != null && cfg.socketPerms != null) [
+              "unixsocketperm ${toString cfg.socketPerms}\n"
+            ]
+            ++ lib.optionals (cfg.extraConfig != "") [
+              cfg.extraConfig
+            ];
         };
       };
     };

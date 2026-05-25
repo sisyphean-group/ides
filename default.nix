@@ -6,11 +6,17 @@
   auto ? true,
   ...
 }:
+let
+  defaultAuto = auto;
+in
 # shell creation args
 {
   services ? { },
+  systemd ? { },
   imports ? [ ],
   serviceDefs ? { },
+  auto ? defaultAuto,
+  monitor ? true,
   ...
 }@args:
 let
@@ -18,8 +24,11 @@ let
   # for passthrough to mkShell
   shellArgs = builtins.removeAttrs args [
     "services"
+    "systemd"
     "serviceDefs"
     "imports"
+    "auto"
+    "monitor"
   ];
   # include some premade services
   baseModules = [ ./modules/redis.nix ];
@@ -31,7 +40,13 @@ let
         ./lib/ides.nix
         # service config and build params
         (_: {
-          inherit services serviceDefs auto;
+          inherit
+            services
+            systemd
+            serviceDefs
+            auto
+            monitor
+            ;
           _buildIdes.shellFn = shell;
           _buildIdes.shellArgs = shellArgs;
         })
